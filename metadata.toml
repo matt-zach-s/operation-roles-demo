@@ -1,5 +1,5 @@
 version = "v2"
 
-display_name = "EKS Simple"
-description  = "Whoami on AWS EKS"
+display_name = "Operation Roles Demo"
+description  = "Demonstrates per-operation IAM role assignment on AWS EKS"
 readme       = "./README.md"

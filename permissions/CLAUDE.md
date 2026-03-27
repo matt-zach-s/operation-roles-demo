@@ -7,6 +7,10 @@
 
 | ID | Time | T | Title | Read |
 |----|------|---|-------|------|
-| #2414 | 4:34 PM | 🔵 | Examined IAM permission patterns and boundary strategy across all custom roles | ~659 |
-| #2413 | 4:33 PM | 🔵 | Analyzed operation roles configuration patterns in dynamic-roles-kitchen-sink | ~574 |
+| #2439 | 5:19 PM | ✅ | Simplified maintenance role by removing RDS and S3-specific policies | ~375 |
+| #2434 | 5:03 PM | 🔄 | Comprehensive simplification removing ALB, certificate, break-glass, and policies infrastructure | ~514 |
+| #2432 | 4:50 PM | 🔄 | Streamlined operation-roles-demo to focused teaching example with 2 components and 3 actions | ~609 |
+| #2428 | " | 🔄 | Simplified maintenance role by removing RDS and S3-specific inline policies | ~439 |
+| #2423 | 4:42 PM | 🔄 | Removed ALB and custom fallback role permissions from operation-roles-demo | ~509 |
+| #2420 | 4:40 PM | 🔄 | Removed unrelated components and actions from operation-roles-demo | ~442 |
 </claude-mem-context>

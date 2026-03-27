@@ -1,6 +1,6 @@
 <center>
-<h1>Dynamic Role Kitchen Sink</h1>
-This app demonstrates the full range of dynamic operation role assignment in Nuon — every component, action, and sandbox operation runs under a dedicated least-privilege IAM role.
+<h1>Operation Roles Demo</h1>
+Every sandbox, component, and action operation runs under a dedicated least-privilege IAM role.
 
 Nuon Install Id: {{ .nuon.install.id }}
 
@@ -10,14 +10,18 @@ AWS Region: {{ .nuon.install_stack.outputs.region }}
 
 ## What This Demonstrates
 
-Nuon resolves which IAM role to use for each operation using a precedence chain:
+Operation roles let you assign a specific IAM role to each individual operation the Nuon runner performs. Instead of one all-purpose maintenance role, each workflow gets exactly the permissions it needs.
 
-1. **Runtime override** — `--role` flag or dashboard selection
-2. **Entity role** — inline `operation_roles` in component/action configs ← used here
-3. **Matrix rules** — app-wide rules in `operation_roles.toml` ← also present as a fallback
-4. **Default role** — fallback from `permissions.toml`
+The runner selects a role using this precedence chain:
 
-This app uses **entity roles** (inline) as the primary assignment so each config file is self-describing. The `operation_roles.toml` matrix remains as a fallback using shared custom roles.
+| Priority | Source | Scope |
+|----------|--------|-------|
+| 1 (highest) | Runtime override (`--role` flag / dashboard) | Any operation |
+| 2 | Entity role (inline `[[operation_roles]]` or `role` field) | Single entity |
+| 3 | Matrix rule (`operation_roles.toml`) | App-wide |
+| 4 (lowest) | Default role (`permissions/provision.toml`, etc.) | App-wide |
+
+This app uses **entity roles** (inline) as the primary assignment so each config file is self-describing. The `operation_roles.toml` matrix mirrors the same mappings as a fallback.
 
 ---
 
@@ -25,45 +29,73 @@ This app uses **entity roles** (inline) as the primary assignment so each config
 
 ### Sandbox (`sandbox.toml`)
 
-| Operation | Role |
-|-----------|------|
-| `provision` | `{{.nuon.install.id}}-sandbox-provision` |
-| `reprovision` | `{{.nuon.install.id}}-sandbox-maintenance` |
-| `deprovision` | `{{.nuon.install.id}}-sandbox-deprovision` |
-
-Roles are defined in `permissions/sandbox-provision.toml`, `sandbox-maintenance.toml`, `sandbox-deprovision.toml`.
+| Operation | Role | Permission Boundary |
+|-----------|------|---------------------|
+| `provision` | `{{.nuon.install.id}}-sandbox-provision` | `provision_boundary.json` |
+| `reprovision` | `{{.nuon.install.id}}-sandbox-maintenance` | `provision_boundary.json` |
+| `deprovision` | `{{.nuon.install.id}}-sandbox-deprovision` | `deprovision_boundary.json` |
 
 ### Components
 
-| Component | Operation | Role |
-|-----------|-----------|------|
-| `whoami` | `deploy` | `{{.nuon.install.id}}-whoami-deploy` |
-| `whoami` | `teardown` | `{{.nuon.install.id}}-whoami-teardown` |
-| `certificate` | `deploy` | `{{.nuon.install.id}}-certificate-deploy` |
-| `certificate` | `teardown` | `{{.nuon.install.id}}-certificate-teardown` |
-| `application_load_balancer` | `deploy` | `{{.nuon.install.id}}-alb-deploy` |
-| `application_load_balancer` | `teardown` | `{{.nuon.install.id}}-alb-teardown` |
-
-Roles are defined in `permissions/whoami-deploy.toml`, `certificate-deploy.toml`, etc.
-Each component carries its own `[[operation_roles]]` blocks inline.
+| Component | Operation | Role | Permission Boundary |
+|-----------|-----------|------|---------------------|
+| `whoami` (helm) | `deploy` | `{{.nuon.install.id}}-whoami-deploy` | `provision_boundary.json` |
+| `whoami` (helm) | `teardown` | `{{.nuon.install.id}}-whoami-teardown` | `deprovision_boundary.json` |
+| `certificate` (terraform) | `deploy` | `{{.nuon.install.id}}-certificate-deploy` | `provision_boundary.json` |
+| `certificate` (terraform) | `teardown` | `{{.nuon.install.id}}-certificate-teardown` | `deprovision_boundary.json` |
 
 ### Actions
 
-| Action | Role |
-|--------|------|
-| `certificate_status` | `{{.nuon.install.id}}-certificate-status-trigger` |
-| `deployments_status` | `{{.nuon.install.id}}-deployments-status-trigger` |
-| `deployment_restart` | `{{.nuon.install.id}}-deployment-restart-trigger` |
-| `alb` | `{{.nuon.install.id}}-alb-trigger` |
-| `alb_healthcheck` | `{{.nuon.install.id}}-alb-healthcheck-trigger` |
-| `simple_demonstration` | `{{.nuon.install.id}}-simple-demonstration-trigger` |
+| Action | Role | Permission Boundary |
+|--------|------|---------------------|
+| `deployments_status` (read-only) | `{{.nuon.install.id}}-deployments-status-trigger` | `maintenance_boundary.json` |
+| `deployment_restart` (write) | `{{.nuon.install.id}}-deployment-restart-trigger` | `maintenance_boundary.json` |
 
-Roles are defined in `permissions/*-trigger.toml`.
-Each action carries its `role` field inline.
+Note the contrast: `deployments_status` only needs `eks:DescribeCluster` while `deployment_restart` also needs EKS edit access via its cluster access entry.
 
-### Matrix Fallback (`operation_roles.toml`)
+---
 
-The matrix covers the same principals using shared `custom-1/2/3` roles. Because entity roles take precedence, the matrix only fires when no inline role is present — useful during development or when adding new components before their dedicated roles are created.
+## File Structure
+
+```
+.
+├── runner.toml                    # Runner config (AWS)
+├── stack.toml                     # CloudFormation stack
+├── sandbox.toml                   # EKS sandbox with operation_roles
+├── sandbox.tfvars                 # Cluster vars + custom role access entries
+├── metadata.toml                  # App metadata
+├── inputs.toml                    # User-facing inputs (domain)
+├── operation_roles.toml           # Matrix rules (app-wide fallback)
+│
+├── components/
+│   ├── whoami.toml                # Helm chart with deploy/teardown roles
+│   └── certificate.toml           # Terraform module with deploy/teardown roles
+│
+├── actions/
+│   ├── deployment_status.toml     # Read-only action (view role)
+│   └── deployment_restart.toml    # Write action (edit role)
+│
+├── permissions/
+│   ├── provision.toml             # Default provision role
+│   ├── maintenance.toml           # Default maintenance role
+│   ├── deprovision.toml           # Default deprovision role
+│   ├── sandbox-provision.toml     # Custom: sandbox provision
+│   ├── sandbox-maintenance.toml   # Custom: sandbox reprovision
+│   ├── sandbox-deprovision.toml   # Custom: sandbox deprovision
+│   ├── whoami-deploy.toml         # Custom: whoami deploy
+│   ├── whoami-teardown.toml       # Custom: whoami teardown
+│   ├── certificate-deploy.toml    # Custom: certificate deploy
+│   ├── certificate-teardown.toml  # Custom: certificate teardown
+│   ├── deployments-status-trigger.toml
+│   ├── deployment-restart-trigger.toml
+│   ├── provision_boundary.json    # Boundary for provision/deploy ops
+│   ├── deprovision_boundary.json  # Boundary for teardown/deprovision ops
+│   └── maintenance_boundary.json  # Boundary for action triggers
+│
+└── src/components/                # Source code for components
+    ├── certificate/               # Terraform (ACM + Route53)
+    └── whoami/                    # Helm chart (deployment + service)
+```
 
 ---
 
@@ -76,8 +108,6 @@ curl https://{{.nuon.inputs.inputs.sub_domain}}.{{.nuon.install.sandbox.outputs.
 ```
 
 ---
-
-### Full State
 
 <details>
 <summary>Full Install State</summary>
