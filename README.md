@@ -21,7 +21,9 @@ The runner selects a role using this precedence chain:
 | 3 | Matrix rule (`operation_roles.toml`) | App-wide |
 | 4 (lowest) | Default role (`permissions/provision.toml`, etc.) | App-wide |
 
-This app uses **entity roles** (inline) as the primary assignment so each config file is self-describing. The `operation_roles.toml` matrix mirrors the same mappings as a fallback.
+This app uses **entity roles** (inline) on components and actions. The `operation_roles.toml` matrix mirrors the same mappings as a fallback.
+
+> **Note:** Sandbox operations use the default provision/maintenance/deprovision roles (not custom operation roles) because the sandbox terraform creates the EKS cluster and needs kubectl access during the same apply. Custom roles would lack EKS access entries until the cluster grants them — a bootstrapping problem.
 
 ---
 
@@ -29,11 +31,7 @@ This app uses **entity roles** (inline) as the primary assignment so each config
 
 ### Sandbox (`sandbox.toml`)
 
-| Operation | Role | Permission Boundary |
-|-----------|------|---------------------|
-| `provision` | `{{.nuon.install.id}}-sandbox-provision` | `provision_boundary.json` |
-| `reprovision` | `{{.nuon.install.id}}-sandbox-maintenance` | `provision_boundary.json` |
-| `deprovision` | `{{.nuon.install.id}}-sandbox-deprovision` | `deprovision_boundary.json` |
+Uses default roles from `permissions/provision.toml`, `maintenance.toml`, and `deprovision.toml`.
 
 ### Components
 
@@ -61,7 +59,7 @@ Note the contrast: `deployments_status` only needs `eks:DescribeCluster` while `
 .
 ├── runner.toml                    # Runner config (AWS)
 ├── stack.toml                     # CloudFormation stack
-├── sandbox.toml                   # EKS sandbox with operation_roles
+├── sandbox.toml                   # EKS sandbox (default roles)
 ├── sandbox.tfvars                 # Cluster vars + custom role access entries
 ├── metadata.toml                  # App metadata
 ├── inputs.toml                    # User-facing inputs (domain)

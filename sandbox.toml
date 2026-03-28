@@ -16,15 +16,3 @@ cluster_endpoint_public_access = "true"
 
 [[var_file]]
 contents = "./sandbox.tfvars"
-
-[[operation_roles]]
-operation = "provision"
-role      = "{{.nuon.install.id}}-sandbox-provision"
-
-[[operation_roles]]
-operation = "reprovision"
-role      = "{{.nuon.install.id}}-sandbox-maintenance"
-
-[[operation_roles]]
-operation = "deprovision"
-role      = "{{.nuon.install.id}}-sandbox-deprovision"

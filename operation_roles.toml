@@ -1,21 +1,6 @@
 type = "matrix"
 
 [[rules]]
-principal = "nuon::sandbox"
-operation = "provision"
-role      = "{{.nuon.install.id}}-sandbox-provision"
-
-[[rules]]
-principal = "nuon::sandbox"
-operation = "reprovision"
-role      = "{{.nuon.install.id}}-sandbox-maintenance"
-
-[[rules]]
-principal = "nuon::sandbox"
-operation = "deprovision"
-role      = "{{.nuon.install.id}}-sandbox-deprovision"
-
-[[rules]]
 principal = "nuon::component:whoami"
 operation = "deploy"
 role      = "{{.nuon.install.id}}-whoami-deploy"
