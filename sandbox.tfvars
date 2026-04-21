@@ -33,11 +33,11 @@ additional_access_entry = {
     principal_arn     = "{{ index .nuon.install_stack.outputs.custom_role_arns (printf "%s-whoami-deploy" .nuon.install.id) }}"
     kubernetes_groups = []
     policy_associations = {
-      edit = {
-        policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy"
+      cluster_admin = {
+        policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
         access_scope = {
-          type       = "namespace"
-          namespaces = ["whoami"]
+          type       = "cluster"
+          namespaces = []
         }
       }
     }
@@ -46,11 +46,11 @@ additional_access_entry = {
     principal_arn     = "{{ index .nuon.install_stack.outputs.custom_role_arns (printf "%s-whoami-teardown" .nuon.install.id) }}"
     kubernetes_groups = []
     policy_associations = {
-      edit = {
-        policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy"
+      cluster_admin = {
+        policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
         access_scope = {
-          type       = "namespace"
-          namespaces = ["whoami"]
+          type       = "cluster"
+          namespaces = []
         }
       }
     }
@@ -68,15 +68,41 @@ additional_access_entry = {
       }
     }
   }
+  alb_deploy = {
+    principal_arn     = "{{ index .nuon.install_stack.outputs.custom_role_arns (printf "%s-alb-deploy" .nuon.install.id) }}"
+    kubernetes_groups = []
+    policy_associations = {
+      cluster_admin = {
+        policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+        access_scope = {
+          type       = "cluster"
+          namespaces = []
+        }
+      }
+    }
+  }
+  alb_teardown = {
+    principal_arn     = "{{ index .nuon.install_stack.outputs.custom_role_arns (printf "%s-alb-teardown" .nuon.install.id) }}"
+    kubernetes_groups = []
+    policy_associations = {
+      cluster_admin = {
+        policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+        access_scope = {
+          type       = "cluster"
+          namespaces = []
+        }
+      }
+    }
+  }
   deployment_restart_trigger = {
     principal_arn     = "{{ index .nuon.install_stack.outputs.custom_role_arns (printf "%s-deployment-restart-trigger" .nuon.install.id) }}"
     kubernetes_groups = []
     policy_associations = {
-      edit = {
-        policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSEditPolicy"
+      cluster_admin = {
+        policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
         access_scope = {
-          type       = "namespace"
-          namespaces = ["whoami"]
+          type       = "cluster"
+          namespaces = []
         }
       }
     }

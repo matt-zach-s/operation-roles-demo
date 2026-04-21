@@ -1,11 +1,11 @@
 type = "custom"
-name = "{{.nuon.install.id}}-whoami-teardown"
-description = "teardown the whoami component."
-display_name = "whoami teardown role"
+name = "{{.nuon.install.id}}-alb-teardown"
+description = "teardown the alb component."
+display_name = "alb teardown role"
 permissions_boundary = "./deprovision_boundary.json"
 
 [[policies]]
-name = "{{.nuon.install.id}}-whoami-teardown"
+name = "{{.nuon.install.id}}-alb-teardown"
 contents = """
 {
   "Version": "2012-10-17",
